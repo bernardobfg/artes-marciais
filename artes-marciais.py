@@ -4,19 +4,23 @@ lista_torneios = []
 lista_lutadores = []
 
 
+
 # ###################################################### #
 # ################# Classes ############################ #
 # ###################################################### #
 
 class Lutador():
     def __init__(self, nome: str, arte: str, peso: float, faixa: str, idade: int, forca: int, id_lutador: int):
-        self._nome = nome
-        self._arte = arte
-        self._peso = peso
-        self._faixa = faixa
-        self._idade = idade
-        self._forca = forca
-        self._id_lutador = id_lutador
+        if isinstance(nome, str) and isinstance(arte, str) and isinstance(peso, float) and isinstance(faixa, str) and isinstance(idade, int) and isinstance(forca, int) and isinstance(id_lutador, int):
+            self._nome = nome
+            self._arte = arte
+            self._peso = peso
+            self._faixa = faixa
+            self._idade = idade
+            self._forca = forca
+            self._id_lutador = id_lutador
+        else:
+            raise ValueError("Valores passados incorretamente")
 
     def __str__(self):
         return f"Esse é o lutador {self._nome}, tem {self._idade} anos, é faixa {self._faixa} em {self._arte } e seu número de registro é {self._id_lutador}"
@@ -52,15 +56,19 @@ class Lutador():
 
 class Torneio():
     def __init__(self, nome_torneio: str, arte: str, lista_pesos: list, lista_faixas: list, id_torneio):
-        self._nome_torneio = nome_torneio
-        self._arte = arte
-        self._lista_pesos = lista_pesos
-        self._lista_faixas = lista_faixas
-        self._id_torneio = id_torneio
-        self._incritos_categorias = {}
-        self._lista_incritos_torneio = []
-        self._ranking_torneio = {}
-        self._lista_lutas = {}
+
+        if isinstance(nome_torneio, str) and isinstance(arte, str) and isinstance(lista_pesos, list) and isinstance(lista_faixas, list) and isinstance(id_torneio, int):
+            self._nome_torneio = nome_torneio
+            self._arte = arte
+            self._lista_pesos = lista_pesos
+            self._lista_faixas = lista_faixas
+            self._id_torneio = id_torneio
+            self._incritos_categorias = {}
+            self._lista_incritos_torneio = []
+            self._ranking_torneio = {}
+            self._lista_lutas = {}
+        else:
+            raise ValueError("Valores passados incorretamente")
         for faixa in lista_faixas:
             self._incritos_categorias[faixa] = {}
             self._ranking_torneio[faixa] = {}
@@ -129,7 +137,6 @@ class Torneio():
             return lutador1, lutador2
         else:
             return lutador2, lutador1
-
 
 
 
@@ -546,7 +553,8 @@ def realizar_luta():
     print(f"Luta entre {lutador1.nome} e {lutador2.nome}")
     sleep(1)
     vencedor, perdedor = torneio.lutar(lutador1, lutador2)
-    print(f"Vencedor: {vencedor.nome}")
+    print(f"Vencedor do embate: {vencedor.nome}")
+    torneio.atualizar_ranking(vencedor=vencedor, perdedor=perdedor, faixa=faixa, indice_peso=indice_peso)
 
 
 
