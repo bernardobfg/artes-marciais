@@ -4,6 +4,10 @@ lista_torneios = []
 lista_lutadores = []
 
 
+# ###################################################### #
+# ################# Classes ############################ #
+# ###################################################### #
+
 class Lutador():
     def __init__(self, nome: str, arte: str, peso: float, faixa: str, idade: int, forca: int, id_lutador: int):
         self._nome = nome
@@ -53,9 +57,20 @@ class Torneio():
         self._lista_pesos = lista_pesos
         self._lista_faixas = lista_faixas
         self._id_torneio = id_torneio
-        self._lista_incritos = []
+        self._incritos_categorias = {}
+        self._lista_incritos_torneio = []
         self._ranking_torneio = {}
-        self._lista_lutas = []
+        self._lista_lutas = {}
+        for faixa in lista_faixas:
+            self._incritos_categorias[faixa] = {}
+            self._ranking_torneio[faixa] = {}
+            self._lista_lutas[faixa] = {}
+            for indice_faixa_de_peso in range(len(lista_pesos)):
+                self._incritos_categorias[faixa][indice_faixa_de_peso] = []
+                self._ranking_torneio[faixa][indice_faixa_de_peso] = {}
+                self._lista_lutas[faixa][indice_faixa_de_peso] = []
+
+
 
     def __str__(self):
         return f"Esse é o Torneio {self._nome_torneio} da modalidade {self._arte} e seu número de registro é {self._id_torneio}"
@@ -81,8 +96,12 @@ class Torneio():
         return self._id_torneio
 
     @property
-    def lista_incritos(self):
-        return self._lista_incritos
+    def lista_incritos_torneio(self):
+        return self._lista_incritos_torneio
+
+    @property
+    def incritos_categorias(self):
+        return self._incritos_categorias
 
     @property
     def ranking_torneio(self):
@@ -92,17 +111,17 @@ class Torneio():
     def lista_lutas(self):
         return self._lista_lutas
 
-    def inscrever_lutador_no_torneio(self, lutador: Lutador):
-        self._lista_incritos.append(lutador)
-        self._ranking_torneio[lutador] = [0, 0, 0]
+    def inscrever_lutador(self, lutador: Lutador, faixa: str, faixa_de_peso: list):
+        self._lista_incritos_torneio.append(lutador)
+        indice = self._lista_pesos.index(faixa_de_peso)
+        self._incritos_categorias[faixa][indice].append(lutador)
+        self._ranking_torneio[faixa][indice][lutador] = [0, 0]
 
-    def atualizar_ranking(self, vencedor: Lutador, perdedor: Lutador, empate: bool = False):
-        if not empate:
-            self._ranking_torneio[vencedor][1] += 1
-            self._ranking_torneio[perdedor][1] += 1
-        else:
-            self._ranking_torneio[vencedor][0] += 1
-            self._ranking_torneio[perdedor][2] += 1
+
+
+    def atualizar_ranking(self, vencedor: Lutador, perdedor: Lutador, faixa: str, faixa_de_peso: list):
+        self.ranking_torneio[faixa][faixa_de_peso][vencedor][0] += 1
+        self.ranking_torneio[faixa][faixa_de_peso][perdedor][1] += 1
 
     def lutar(self, lutador1, lutador2):
         pass
@@ -119,7 +138,7 @@ def menu_do_torneio():
     while True:
         imprime_menu_do_torneio()
         acao_torneio = input("O que deseja? ")
-        if acao_torneio not in ['1', '2', '3', '4', '5','6','7']:
+        if acao_torneio not in ['1', '2', '3', '4', '5','6','7', '8']:
             print("Digite valores validos\n")
             sleep(2)
             continue
@@ -128,14 +147,16 @@ def menu_do_torneio():
         elif acao_torneio == '2':
             inscrever_lutador()
         elif acao_torneio == '3':
-            ver_torneios()
+            ver_detalhes_torneio()
         elif acao_torneio == '4':
-            ver_ranking()
+            ver_torneios()
         elif acao_torneio == '5':
-            ver_lutadores_no_torneio()
+            ver_ranking()
         elif acao_torneio == '6':
-            realizar_luta()
+            ver_lutadores_no_torneio()
         elif acao_torneio == '7':
+            realizar_luta()
+        elif acao_torneio == '8':
             sleep(1)
             print()
             break
@@ -145,11 +166,12 @@ def imprime_menu_do_torneio():
     print('---------------------------------------')
     print('1- Criar Torneio')
     print('2- Inscrever Lutador')
-    print('3- Ver Torneios existentes')
-    print('4- Ver Ranking de Torneio')
-    print('5- Ver Lutadores incritos em Torneio')
-    print('6- Realizar Luta')
-    print('7- Retornar ao Menu Principal')
+    print('3- Ver detalhe de torneio')
+    print('4- Ver Torneios existentes')
+    print('5- Ver Ranking de Torneio')
+    print('6- Ver Lutadores incritos em Torneio')
+    print('7- Realizar Luta')
+    print('8- Retornar ao Menu Principal')
     print('----------------------------------------')
 
 # Criar Torneio #
@@ -245,17 +267,30 @@ def inscrever_lutador():
         except ValueError:
             print("Digite um valor válido")
             sleep(1)
+    if id_torneio > len(lista_torneios):
+        print("Torneio inexistente")
+        sleep(1)
+        return
+    if id_lutador > len(lista_lutadores):
+        print("Lutador inexistente")
+        sleep(1)
+        return
 
     lutador = lista_lutadores[id_lutador-1]
     torneio = lista_torneios[id_torneio-1]
 
-    if lutador.arte.lower() == torneio.arte.lower():
+    if lutador in torneio.lista_incritos_torneio:
+        print("O lutador já está inscrito no torneio")
+        sleep(1)
+        return
+
+    if lutador.arte.lower() != torneio.arte.lower():
         print("O lutador não está apto a participar desse torneio devido a sua modalidade")
         return
 
-    if lutador.faixa.lower() in torneio.lista_faixas.lower():
+    if lutador.faixa.lower() in torneio.lista_faixas:
         if 'absoluto' in torneio.lista_faixas:
-            print(f"1- Lutas na categoria {lutador.faixa}")
+            print(f"1- Lutar na categoria Faixa: {lutador.faixa}")
             print(f"2 - Lutar no absoluto")
             while True:
                 resposta = input("O lutador irá lutar em que categoria? ")
@@ -266,7 +301,12 @@ def inscrever_lutador():
                     categoria = "absoluto"
                     break
         else:
-            categoria = lutador.faixa.lower()
+            print(f"1- Lutas na categoria {lutador.faixa}")
+            while True:
+                resposta = input("O lutador irá lutar em que categoria? ")
+                if resposta == "1":
+                    categoria = lutador.faixa.lower()
+                    break
     else:
         if "absoluto" in torneio.lista_faixas:
             categoria = "absoluto"
@@ -275,24 +315,28 @@ def inscrever_lutador():
             return
     pesos_disponiveis = []
     for faixa_pesos in torneio.lista_pesos:
-        if lutador.peso in range(faixa_pesos[0], faixa_pesos[1]):
-            pesos_disponiveis.append(pesos_disponiveis)
+        if faixa_pesos[0] <= lutador.peso < faixa_pesos[1]:
+            pesos_disponiveis.append(faixa_pesos)
 
-    if len(pesos_disponiveis) > 1:
+    if len(pesos_disponiveis) >= 1:
         for e in range(len(pesos_disponiveis)):
             if pesos_disponiveis[e] == [0, 500]:
-                print(f"{e} - Sem peso")
+                print(f"{e+1} - Sem peso")
             else:
-                print(f"{e} - Entre {pesos_disponiveis[e][0]} e {pesos_disponiveis[e][1]}")
+                print(f"{e+1} - Entre {pesos_disponiveis[e][0]}kg e {pesos_disponiveis[e][1]}kg")
         while True:
-            resposta = input("Deseja lutar em que faixa de peso? ")
-            if resposta in range(len(pesos_disponiveis)):
-                peso = pesos_disponiveis[e]
-                break
+            try:
+                resposta = int(input("Deseja lutar em que faixa de peso? "))
+                if resposta <= len(pesos_disponiveis):
+                    peso = pesos_disponiveis[resposta - 1]
+                    break
+            except ValueError:
+                print('Digite um valor válido')
+                sleep()
     else:
         print("O lutador não está apto para participar do torneio devido ao seu peso")
         return
-    torneio.inscrever_lutador_no_torneio(lutador=lutador)
+    torneio.inscrever_lutador(lutador=lutador, faixa=categoria, faixa_de_peso=peso)
 
 # Ver Torneios #
 def ver_torneios():
@@ -305,6 +349,26 @@ def ver_torneios():
     for torneio in lista_torneios:
         print(f"{torneio.id_torneio} - {torneio.nome_torneio}")
 
+# Ver detalhes de torneio #
+def ver_detalhes_torneio():
+    while True:
+        try:
+            id_torneio = int(input("Digite o número de registro do torneio(caso não saiba, digite 0): "))
+            if id_torneio == 0:
+                ver_torneios()
+                continue
+            break
+        except ValueError:
+            print("Digite um valor válido")
+            sleep(1)
+    if id_torneio > len(lista_torneios):
+        print("Torneio inexistente")
+        sleep(1)
+        return
+    torneio = lista_torneios[id_torneio - 1]
+    print(torneio)
+
+
 
 # Ver Ranking #
 def ver_ranking():
@@ -313,6 +377,57 @@ def ver_ranking():
         sleep(1)
         return
 
+    while True:
+        try:
+            id_torneio = int(input("Digite o número de registro do torneio(caso não saiba, digite 0): "))
+            if id_torneio == 0:
+                ver_torneios()
+                continue
+            break
+        except ValueError:
+            print("Digite um valor válido")
+            sleep(1)
+    if id_torneio > len(lista_torneios):
+        print("Torneio inexistente")
+        sleep(1)
+        return
+    torneio = lista_torneios[id_torneio-1]
+    for indice in range(len(torneio.lista_faixas)):
+        print(f"{indice + 1} - faixa: {torneio.lista_faixas[indice]}")
+    while True:
+        try:
+            indice_faixa = int(input("Digite o número correspondente a faixa que você deseja: ")) - 1
+            if indice_faixa in range(len(torneio.lista_faixas)):
+                faixa = torneio.lista_faixas[indice_faixa]
+                break
+            print("Digite um valor válido")
+
+        except ValueError:
+            print("Digite um valor válido")
+            sleep(1)
+
+    for indice in range(len(torneio.lista_pesos)):
+        print(f"{indice + 1} - Categoria entre {torneio.lista_pesos[indice][0]}kg e {torneio.lista_pesos[indice][1]}kg")
+    while True:
+        try:
+            indice_peso = int(input("Digite o número correspondente ao peso que você deseja: ")) - 1
+            if indice_peso in range(len(torneio.lista_pesos)):
+                break
+            print("Digite um valor válido")
+
+            break
+        except ValueError:
+            print("Digite um valor válido")
+            sleep(1)
+    print()
+    print('Id - Nome - Vitorias - Derrotas')
+    for indice in range(len(torneio.ranking_torneio[faixa][indice_peso])):
+        lutador = torneio.incritos_categorias[faixa][indice_peso][indice]
+        print(f"{(lutador.id_lutador)} - {lutador.nome} - {torneio.ranking_torneio[faixa][indice_peso][lutador][0]} - {torneio.ranking_torneio[faixa][indice_peso][lutador][1]}")
+
+
+
+
 
 # Ver lutadores #
 def ver_lutadores_no_torneio():
@@ -320,8 +435,29 @@ def ver_lutadores_no_torneio():
         print("Ainda não existem torneios")
         sleep(1)
         return
-    pass
 
+    while True:
+        try:
+            id_torneio = int(input("Digite o número de registro do torneio(caso não saiba, digite 0): "))
+            if id_torneio == 0:
+                ver_torneios()
+                continue
+            break
+        except ValueError:
+            print("Digite um valor válido")
+            sleep(1)
+    if id_torneio > len(lista_torneios):
+        print("Torneio inexistente")
+        sleep(1)
+        return
+    torneio = lista_torneios[id_torneio - 1]
+    print()
+    print('Id - Nome')
+    for lutador in torneio.lista_incritos_torneio:
+        print(f"{lutador.id_lutador} - {lutador.nome}")
+
+
+# TODO
 # Lutar #
 def realizar_luta():
     if len(lista_torneios) == 0:
@@ -489,14 +625,6 @@ def imprime_menu_principal():
     print("3- Criar Torneio Aleatório")
     print("4- Sair")
     print("#############################")
-
-
-
-
-
-
-
-
 
 
 
